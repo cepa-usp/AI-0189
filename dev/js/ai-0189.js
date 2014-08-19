@@ -107,7 +107,7 @@ AI0188.prototype.showHideVectors = function(vet, checked){
 }
 
 AI0188.prototype.playPause = function(){
-	$('#backRollingImg').spToggle();
+	//$('#backRollingImg').spToggle();
 	if(this.pause){
 		this.pause = false;
 		$("#playPause").html("Pause").css("background-color", "red");
@@ -128,13 +128,13 @@ AI0188.prototype.createBackground = function(imgBkg){
 		background: "url(" + imgBkg + ")",
 		'background-repeat': "repeat-x",
 		'background-size': " auto 100%"
-	}).pan({
+	})/*.pan({
 		fps: 30, 
 		speed: 3, 
 		dir: 'right'
-	}).appendTo('#'+this.el);
+	})*/.appendTo('#'+this.el);
 
-	setTimeout(this.adjustBackgroundImage.bind(this), 3000);
+	//setTimeout(this.adjustBackgroundImage.bind(this), 3000);
 	//console.log("done")
 }
 
@@ -153,6 +153,11 @@ AI0188.prototype.adjustBackgroundImage = function(){
 }
 
 AI0188.prototype.createWheelDiv = function(){
+	this.widthProportion = 21;
+	this.heightProportion = 8;
+
+
+
 	var wWidth = $(window).width();
 	var wHeight = $(window).height();
 	var whSize;
@@ -162,11 +167,15 @@ AI0188.prototype.createWheelDiv = function(){
 		whSize = wWidth * this.wheelPercentage;
 	}
 
+	this.prop = this.svgSize/whSize;
+
+	var graphWidth = (this.svgSize * this.widthProportion)/this.heightProportion;
+
 	$('<div/>', {
 	    id: 'graphDiv'
 	}).css({
 		position: "absolute",
-		width: wWidth + "px",
+		width: graphWidth + "px",
 		height: whSize + "px",
 		bottom: "0px",
 		left: "0px",
@@ -182,12 +191,16 @@ AI0188.prototype.createWheelDiv = function(){
 		width: whSize + "px",
 		height: whSize + "px",
 		bottom: "0%",
-		"margin-left": "00%"
+		left: wWidth + "px"
+		//"margin-left": "00%"
 		//"margin-left": marginLeft + "px"
 		//"background-color": "green"
 	}).appendTo('#'+this.el);
 
-	$(window).resize(this.repositionWheel.bind(this));
+	this.wheelLeft = wWidth;
+	this.wheelDiv = $("#wheelDiv");
+
+	//$(window).resize(this.repositionWheel.bind(this));
 }
 
 AI0188.prototype.repositionWheel = function(){
@@ -205,18 +218,18 @@ AI0188.prototype.repositionWheel = function(){
 	$("#graphDiv").width(wWidth);
 	$("#graphDiv").height(whSize);
 
-	this.graph.setViewBox(0,0,wWidth,this.svgSize);
-    this.graph.setSize(wWidth + 'px', whSize + 'px');
+	//this.graph.setViewBox(0,0,wWidth,this.svgSize);
+    //this.graph.setSize(wWidth + 'px', whSize + 'px');
 
 	$("#wheelDiv").width(whSize);
 	$("#wheelDiv").height(whSize);
 	//$("#wheelDiv").css("margin-left", marginLeft + "px");
 
-	var divScale = $("#backRollingImg").height()/this.imgProperties.height;
+	/*var divScale = $("#backRollingImg").height()/this.imgProperties.height;
 	var newWidth = this.imgProperties.width * divScale;
 	var newHeight = this.imgProperties.height * divScale;
 	$._spritely.instances.backRollingImg.options.img_width = newWidth;
-	$._spritely.instances.backRollingImg.options.img_height = newHeight;
+	$._spritely.instances.backRollingImg.options.img_height = newHeight;*/
 }
 
 AI0188.prototype.createRaphael = function(){
@@ -228,10 +241,13 @@ AI0188.prototype.createRaphael = function(){
 	}else{
 		whSize = wWidth * (this.wheelPercentage + 0.2);
 	}
+	var graphWidth = (this.svgSize * this.widthProportion)/this.heightProportion;
+	//var graphViewWidth = (whSize * this.widthProportion)/this.heightProportion;
 
 	this.graph = Raphael("graphDiv");
-	this.graph.setViewBox(0,0,wWidth,this.svgSize);
-    this.graph.setSize(wWidth + 'px', whSize + 'px');
+	this.graph.setViewBox(0,0,graphWidth,this.svgSize);
+    //this.graph.setSize(graphWidth + 'px', this.svgSize + 'px');
+    this.graph.setSize('100%', '100%');
 
 
 	this.raphael = Raphael("wheelDiv");
@@ -292,7 +308,7 @@ AI0188.prototype.wheelClick = function(evt){
 		}
 	}else{
 		//Clique fora do raio
-		console.log(evt.target.id)
+		//console.log(evt.target.id)
 		if(evt.target.id == "backRollingImg" || evt.target.id == "content") ai.removeAllPoints();
 	}
 }
@@ -306,7 +322,7 @@ AI0188.prototype.addPoint = function(ptx, pty, ray){
 
 	//Angulo do ponto em relação à origem.
 	//last.angle = Math.atan2(pty - this.svgSize/2, ptx - this.svgSize/2);
-	//last.ray = ray;
+	last.ray = ray;
 	last.tInicial = this.tcurrent * 1000;
 	
 	//Vetor translação
@@ -327,9 +343,14 @@ AI0188.prototype.addPoint = function(ptx, pty, ray){
 	//else last.result = this.raphael.path("M" + ptx + "," + pty + "L" + resultx + "," + resulty).attr({"stroke-width": "1", "stroke": "#00FF00", fill:"#00FF00"});
 	
 	//O ponto
-	last.pt = this.raphael.circle(ptx, pty, this.ptR).attr("fill", "#F00");
-	last.graphPts = [{x:ptx, y:pty}];
-	last.graph = this.graph.path("").attr({"stroke-width": "1", "stroke": "#000"})
+	var wheelx = this.wheelDiv.offset().left * this.prop;
+	var wheely = 0;//this.wheelDiv.offset().top;
+
+	var cor = getRandomColor();
+	last.pt = this.raphael.circle(ptx, pty, this.ptR).attr("fill", cor);
+	last.graphPath = "M" + (ptx + wheelx) + "," + (pty + wheely);
+	last.graph = this.graph.path("").attr({"stroke-width": "2", "stroke": cor});
+	last.lastRot = 0;
 
 	//if(!$("#vetTrans")[0].checked) last.trans.hide();
 	//if(!$("#vetRot")[0].checked) last.rot.hide();
@@ -338,11 +359,21 @@ AI0188.prototype.addPoint = function(ptx, pty, ray){
 	this.pts.push(last);
 }
 
+function getRandomColor() {
+    var letters = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for (var i = 0; i < 6; i++ ) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
 AI0188.prototype.removePt = function(pt){
 	//pt.trans.remove();
 	//pt.rot.remove();
 	//pt.result.remove();
 	pt.pt.remove();
+	pt.graph.remove();
 }
 
 AI0188.prototype.updateT = function(timestamp){
@@ -354,6 +385,20 @@ AI0188.prototype.updateT = function(timestamp){
 		this.tcurrent += dt;
 		//console.log(this.tcurrent)
 		this.wheelImage.attr("transform", "r-" + this.theta * this.tcurrent*100);
+		this.wheelLeft -= this.theta * dt * 150 / this.prop;
+
+		if(this.wheelLeft < -$("#wheelDiv").width()){
+			this.wheelLeft = $(window).width();
+			for (var i = 0; i < this.pts.length; i++) {
+				pt = this.pts[i];
+				pt.graphPath = "M" + ($(window).width() * this.prop + 100) + ",270";
+			}
+
+		}
+
+		this.wheelDiv.css({
+			left: this.wheelLeft + "px"
+		})
 
 
 		/*if(this.count < 1){
@@ -363,33 +408,44 @@ AI0188.prototype.updateT = function(timestamp){
 		}else{
 			this.count = 0;
 		}*/
-
-		var inicial;
-		var path = "";
+		
 		var pt = null;
 		var ptRotation = null;
 		var bbox = null;
 		var ptx = null;
 		var pty = null;
+		var wheelx = this.wheelDiv.offset().left * this.prop;
+		var wheely = 0;//this.wheelDiv.offset().top;
+
+		/*var inicial;
+		var path = "";
+		*/
 		/*var rotx = null;
 		var roty = null;
 		var resultx = null;
 		var resulty = null;
 		var angleResult = null;*/
+		//var actualRot;
 
 		for (var i = 0; i < this.pts.length; i++) {
 			pt = this.pts[i];
 			ptRotation = this.theta * ((this.tcurrent * 1000) - pt.tInicial)/10;
 			pt.pt.attr("transform", "r-" + ptRotation + " " + this.svgSize/2 + "," + this.svgSize/2);
+			//actualRot = ptRotation - pt.lastRot;
+			//pt.lastRot = ptRotation;
 
 			bbox = pt.pt.getBBox();
-			ptx = bbox.x + this.ptR;
-			pty = bbox.y + this.ptR;
+			ptx = (bbox.x + this.ptR) + wheelx;
+			pty = bbox.y + this.ptR + wheely;
+			pt.graphPath += "L" + ptx + "," + pty;
 
-			path = "M" + ptx + "," + pty;
+			pt.graph.attr("path", pt.graphPath);
+
+			/*path = "M" + ptx + "," + pty;
 
 			for (var j = pt.graphPts.length - 1; j >= 0; j--) {
-				pt.graphPts[j].x += this.vTrans * dt;
+				//console.log((actualRot * dt) * pt.ray)
+				pt.graphPts[j].x += (actualRot * dt) * (pt.ray/150) * pt.ray;
 				if(pt.graphPts[j].x > 1000){
 					pt.graphPts.splice(j, 1);
 				}else{
@@ -399,7 +455,7 @@ AI0188.prototype.updateT = function(timestamp){
 
 			pt.graphPts.push({x:ptx, y:pty});
 
-			pt.graph.attr("path", path);
+			pt.graph.attr("path", path);*/
 			/*pt.angle = Math.atan2(pty - this.svgSize/2, ptx - this.svgSize/2);
 
 			//Vetor translação:
