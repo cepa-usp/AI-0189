@@ -15,16 +15,28 @@ function AI0188(element, background){
 	this.height = this.divEl.height();
 	this.bkg = background;
 	this.raphael = null;
-	this.graph = null;
+	//this.graph = null;
 	this.pts = [];
 	
 	//this.divEl.css("background-color", "blue");
 
 	this.wheelPercentage = 0.6;
+	//Medidas da roda em metros
+	this.wheel = {
+		ray: 1,
+		linearVel: 1,
+	}
+	//x pixels = 1 metro
+	this.toPixel = 100;
+	this.toRad = 180/Math.PI;
+	this.svgHeight = 400;//=4m
+	this.wheel.theta = this.wheel.linearVel/this.wheel.ray;
+
 	this.wheelSize = 300;
 	this.svgSize = 540;
-	this.theta = 0.6;
+	//this.theta = 0.6;
 	this.vTrans = this.theta * this.wheelSize/2;
+
 	this.ptR = 5;
 	this.tcurrent = 0;
 	this.count = 0;
@@ -58,52 +70,6 @@ AI0188.prototype.createButtons = function(){
 		cursor: "pointer"
 	}).on("click", this.playPause.bind(this)
 	).appendTo('#'+this.el);
-
-	/*$("#" + this.el).append("<div id='checks'></div>");
-	$("#checks").append(
-		"<input id='vetTrans' type='checkbox' value='translacao' checked='true'/><label for='vetTrans'> Translação</label><br>" 
-	).append(
-		"<input id='vetRot' type='checkbox' value='rotacao' checked='true'/><label for='vetRot'> Rotação</label><br>"
-	).append(
-		"<input id='vetResult' type='checkbox' value='resultante' checked='true'/><label for='vetResult'> Resultante</label>" 
-	).css({
-		"margin-left": "10px",
-		"margin-top": "10px",
-		width: "120px"
-	});
-
-	$("#vetTrans").on("change", this.checkChange.bind(this));
-	$("#vetRot").on("change", this.checkChange.bind(this));
-	$("#vetResult").on("change", this.checkChange.bind(this));*/
-}
-
-AI0188.prototype.checkChange = function(evt){
-	var el = $(evt.target);
-	this.showHideVectors(el.val(), el[0].checked)
-}
-
-AI0188.prototype.showHideVectors = function(vet, checked){
-	//console.log(this);
-	switch(vet){
-		case "rotacao":
-			for (var i = 0; i < this.pts.length; i++) {
-				if(checked) this.pts[i].rot.show();
-				else this.pts[i].rot.hide();
-			};
-			break;
-		case "translacao":
-			for (var i = 0; i < this.pts.length; i++) {
-				if(checked) this.pts[i].trans.show();
-				else this.pts[i].trans.hide();
-			};
-			break;
-		case "resultante":
-			for (var i = 0; i < this.pts.length; i++) {
-				if(checked) this.pts[i].result.show();
-				else this.pts[i].result.hide();
-			};
-			break;
-	}
 }
 
 AI0188.prototype.playPause = function(){
@@ -117,49 +83,12 @@ AI0188.prototype.playPause = function(){
 	}
 }
 
-AI0188.prototype.createBackground = function(imgBkg){
-	$('<div/>', {
-	    id: 'backRollingImg'
-	}).css({
-		position: "absolute",
-		width: "100%",
-		height: "60%",
-		bottom: "0px",
-		background: "url(" + imgBkg + ")",
-		'background-repeat': "repeat-x",
-		'background-size': " auto 100%"
-	})/*.pan({
-		fps: 30, 
-		speed: 3, 
-		dir: 'right'
-	})*/.appendTo('#'+this.el);
-
-	//setTimeout(this.adjustBackgroundImage.bind(this), 3000);
-	//console.log("done")
-}
-
-AI0188.prototype.adjustBackgroundImage = function(){
-	//console.log(this);
-	this.imgProperties = {};
-	this.imgProperties.width = $._spritely.instances.backRollingImg.options.img_width;
-	this.imgProperties.height = $._spritely.instances.backRollingImg.options.img_height;
-
-	var divScale = $("#backRollingImg").height()/this.imgProperties.height;
-	var newWidth = this.imgProperties.width * divScale;
-	var newHeight = this.imgProperties.height * divScale;
-	$._spritely.instances.backRollingImg.options.img_width = newWidth;
-	$._spritely.instances.backRollingImg.options.img_height = newHeight;
-	//console.log("imagem ajustada")
-}
-
 AI0188.prototype.createWheelDiv = function(){
 	this.widthProportion = 21;
 	this.heightProportion = 8;
 
-
-
-	var wWidth = $(window).width();
-	var wHeight = $(window).height();
+	var wWidth = this.width;
+	var wHeight = this.height;
 	var whSize;
 	if(wWidth >= wHeight){
 		whSize = wHeight * this.wheelPercentage;
@@ -167,102 +96,75 @@ AI0188.prototype.createWheelDiv = function(){
 		whSize = wWidth * this.wheelPercentage;
 	}
 
-	this.prop = this.svgSize/whSize;
-
-	var graphWidth = (this.svgSize * this.widthProportion)/this.heightProportion;
-
-	$('<div/>', {
-	    id: 'graphDiv'
-	}).css({
-		position: "absolute",
-		width: graphWidth + "px",
-		height: whSize + "px",
-		bottom: "0px",
-		left: "0px",
-		//"margin-left": marginLeft + "px"
-		//"background-color": "green"
-	}).appendTo('#'+this.el);
-
-	var marginLeft = wWidth/2 - whSize/2;
 	$('<div/>', {
 	    id: 'wheelDiv'
 	}).css({
 		position: "absolute",
-		width: whSize + "px",
+		width: wWidth + "px",
 		height: whSize + "px",
-		bottom: "0%",
-		left: wWidth + "px"
-		//"margin-left": "00%"
-		//"margin-left": marginLeft + "px"
-		//"background-color": "green"
+		bottom: "0px",
+		left: "0px"
 	}).appendTo('#'+this.el);
 
-	this.wheelLeft = wWidth;
+	//this.wheelLeft = wWidth;
 	this.wheelDiv = $("#wheelDiv");
 
-	//$(window).resize(this.repositionWheel.bind(this));
+	$(window).resize(this.repositionWheel.bind(this));
 }
 
 AI0188.prototype.repositionWheel = function(){
 	//console.log(this.wheelPercentage)
-	var wWidth = $(window).width();
-	var wHeight = $(window).height();
+
+	this.width = this.divEl.width();
+	this.height = this.divEl.height();
+
+	var wWidth = this.width;
+	var wHeight = this.height;
 	var whSize;
 	if(wWidth >= wHeight){
 		whSize = wHeight * this.wheelPercentage;
 	}else{
-		whSize = wWidth * (this.wheelPercentage + 0.2);
+		whSize = wWidth * this.wheelPercentage;
 	}
-	//var marginLeft = wWidth/2 - whSize/2;
 
-	$("#graphDiv").width(wWidth);
-	$("#graphDiv").height(whSize);
+	this.wheelDiv.width(wWidth);
+	this.wheelDiv.height(whSize);
 
-	//this.graph.setViewBox(0,0,wWidth,this.svgSize);
-    //this.graph.setSize(wWidth + 'px', whSize + 'px');
+	this.svgWidth = (wWidth * this.svgHeight) / whSize;
 
-	$("#wheelDiv").width(whSize);
-	$("#wheelDiv").height(whSize);
-	//$("#wheelDiv").css("margin-left", marginLeft + "px");
+	this.raphael.setViewBox(0,0,this.svgWidth,this.svgHeight);
+    this.raphael.setSize(wWidth + 'px', whSize + 'px');
 
-	/*var divScale = $("#backRollingImg").height()/this.imgProperties.height;
-	var newWidth = this.imgProperties.width * divScale;
-	var newHeight = this.imgProperties.height * divScale;
-	$._spritely.instances.backRollingImg.options.img_width = newWidth;
-	$._spritely.instances.backRollingImg.options.img_height = newHeight;*/
 }
 
 AI0188.prototype.createRaphael = function(){
-	var wWidth = $(window).width();
-	var wHeight = $(window).height();
+	var wWidth = this.width;
+	var wHeight = this.height;
 	var whSize;
 	if(wWidth >= wHeight){
 		whSize = wHeight * this.wheelPercentage;
 	}else{
 		whSize = wWidth * (this.wheelPercentage + 0.2);
 	}
-	var graphWidth = (this.svgSize * this.widthProportion)/this.heightProportion;
-	//var graphViewWidth = (whSize * this.widthProportion)/this.heightProportion;
 
-	this.graph = Raphael("graphDiv");
-	this.graph.setViewBox(0,0,graphWidth,this.svgSize);
-    //this.graph.setSize(graphWidth + 'px', this.svgSize + 'px');
-    this.graph.setSize('100%', '100%');
-
+   	this.svgWidth = (wWidth * this.svgHeight) / whSize;
 
 	this.raphael = Raphael("wheelDiv");
-	this.raphael.setViewBox(0,0,this.svgSize,this.svgSize);
+	this.raphael.setViewBox(0,0,this.svgWidth,this.svgSize);
     this.raphael.setSize('100%', '100%');
 
-    this.wheelImage = this.raphael.image("img/roda.png", (this.svgSize - this.wheelSize)/2, (this.svgSize - this.wheelSize)/2, this.wheelSize, this.wheelSize);
-    //this.wheelCircle = this.raphael.circle(250, 250, 250);
-	//this.wheelCircle.click(this.wheelClick);
-	//this.wheelImage.newParent = this;
-	//this.wheelImage.click(this.wheelClick);
+    this.wheel.center = {
+    	x: -10 - (this.wheel.ray * this.toPixel),
+    	y: this.svgHeight/2
+    }
+    this.wheelImage = this.raphael.image("img/roda.png", this.wheel.center.x - (this.wheel.ray * this.toPixel), this.wheel.center.y - (this.wheel.ray * this.toPixel), (this.wheel.ray * this.toPixel) * 2, (this.wheel.ray * this.toPixel) * 2);
+   	//this.wheelImage = this.raphael.set();
+   	//this.wheelImage.push(this.raphael.image("img/roda.png", this.wheel.center.x - (this.wheel.ray * this.toPixel), this.wheel.center.y - (this.wheel.ray * this.toPixel), (this.wheel.ray * this.toPixel) * 2, (this.wheel.ray * this.toPixel) * 2));
+	
 	this.divEl.on("click", this.wheelClick.bind(this));
-	//this.wheelAnimation = Raphael.animation({transform: "r-360"}, 8000).repeat(Infinity);
-	//this.wheelImage.animate(this.wheelAnimation);
-	//$('#wheelDiv').rotate();
+
+	this.repositionWheel();
+
 	requestAnimationFrame(this.updateT.bind(this));
 }
 
@@ -275,33 +177,34 @@ AI0188.prototype.removeAllPoints = function(){
 
 AI0188.prototype.wheelClick = function(evt){
 	var ai = this;//.newParent;
-	//console.log(evt)
 	var div = $("#wheelDiv");
-	var posx = Number(((evt.clientX - div.offset().left) * ai.svgSize/div.width()).toFixed(0));
-	var posy = Number(((evt.clientY - div.offset().top) * ai.svgSize/div.height()).toFixed(0));
-	var ray = distance(ai.svgSize/2, ai.svgSize/2, posx, posy);
+	var posx = Number(((evt.clientX - div.offset().left) * ai.svgWidth/div.width()).toFixed(0));
+	var posy = Number(((evt.clientY - div.offset().top) * ai.svgHeight/div.height()).toFixed(0));
+	var ray = distance(this.wheel.center.x, this.wheel.center.y, posx, posy);
 	var minDist = 15;
 
-	if(ray <= ai.wheelSize/2 + 2) {
-		if(distance(posx, posy, ai.svgSize/2, ai.svgSize/2) < minDist){
+	var wheelRay = this.wheel.ray * this.toPixel;
+
+	if(ray <= wheelRay) {
+		if(distance(posx, posy, this.wheel.center.x, this.wheel.center.y) < minDist){
 			//Posiciona o ponto no centro da roda:
-			ai.addPoint(ai.svgSize/2, ai.svgSize/2, 0);
+			ai.addPoint(this.wheel.center.x,this.wheel.center.y, 0);
 
 		}else if(distance(posx, posy, ai.svgSize/2 + ai.wheelSize/2, ai.svgSize/2) < minDist){
 			//Posiciona o ponto no ponto 1 (0 graus)
-			ai.addPoint(ai.svgSize/2 + ai.wheelSize/2, ai.svgSize/2, ai.wheelSize/2);
+			ai.addPoint(this.wheel.center.x + wheelRay, this.wheel.center.y, wheelRay);
 
 		}else if(distance(posx, posy, ai.svgSize/2, ai.svgSize/2 - ai.wheelSize/2) < minDist){
 			//Posiciona o ponto no ponto 2 (90 graus)
-			ai.addPoint(ai.svgSize/2, ai.svgSize/2 - ai.wheelSize/2, ai.wheelSize/2);
+			ai.addPoint(this.wheel.center.x, this.wheel.center.y - wheelRay, wheelRay);
 
 		}else if(distance(posx, posy, ai.svgSize/2 - ai.wheelSize/2, ai.svgSize/2) < minDist){
 			//Posiciona o ponto no ponto 3 (180 graus)
-			ai.addPoint(ai.svgSize/2 - ai.wheelSize/2, ai.svgSize/2, ai.wheelSize/2);
+			ai.addPoint(this.wheel.center.x - wheelRay, this.wheel.center.y, wheelRay);
 
 		}else if(distance(posx, posy, ai.svgSize/2, ai.svgSize/2 + ai.wheelSize/2) < minDist){
 			//Posiciona o ponto no ponto 4 (270 graus)
-			ai.addPoint(ai.svgSize/2, ai.svgSize/2 + ai.wheelSize/2, ai.wheelSize/2);
+			ai.addPoint(this.wheel.center.x, this.wheel.center.y + wheelRay, wheelRay);
 		}else{
 			//Posiciona o ponto onde foi clicado.
 			ai.addPoint(posx, posy, ray);
@@ -321,41 +224,27 @@ AI0188.prototype.addPoint = function(ptx, pty, ray){
 	var last = {};
 
 	//Angulo do ponto em relação à origem.
-	//last.angle = Math.atan2(pty - this.svgSize/2, ptx - this.svgSize/2);
+	last.angle = Math.atan2(pty - this.wheel.center.y, ptx - this.wheel.center.x);
+	console.log(last.angle)
 	last.ray = ray;
-	last.tInicial = this.tcurrent * 1000;
-	
-	//Vetor translação
-	//last.trans = this.raphael.path("M" + ptx + "," + pty + "L" + (ptx - this.vTrans) + "," + pty + drawArrow(ptx - this.vTrans, pty, Math.PI)).attr({"stroke-width": "3", "stroke": "#000000", fill:"#000000"});
-	
-	//Vetor rotação
-	//last.d = this.theta * ray;
-	//var rotx = ray * Math.cos(last.angle) + last.d * Math.sin(last.angle) + this.svgSize/2;
-	//var roty = ray * Math.sin(last.angle) - last.d * Math.cos(last.angle) + this.svgSize/2;
-	//if(distance(rotx, roty, ptx, pty) > 5) last.rot = this.raphael.path("M" + ptx + "," + pty + "L" + rotx + "," + roty + drawArrow(rotx, roty, last.angle - Math.PI/2)).attr({"stroke-width": "2", "stroke": "#0000FF", fill:"#0000FF"});
-	//else last.rot = this.raphael.path("M" + ptx + "," + pty + "L" + rotx + "," + roty).attr({"stroke-width": "2", "stroke": "#0000FF", fill:"#0000FF"});
-
-	//Vetor resultante
-	//var resultx = (ptx - this.vTrans - ptx) + (rotx - ptx) + ptx;
-	//var resulty = (pty - pty) + (roty - pty) + pty;
-	//var angleResult = Math.atan2((pty - pty) + (roty - pty), (ptx - this.vTrans - ptx) + (rotx - ptx));
-	//if(distance(resultx, resulty, ptx, pty) >= 10)last.result = this.raphael.path("M" + ptx + "," + pty + "L" + resultx + "," + resulty + drawArrow(resultx, resulty, angleResult)).attr({"stroke-width": "1", "stroke": "#00FF00", fill:"#00FF00"});
-	//else last.result = this.raphael.path("M" + ptx + "," + pty + "L" + resultx + "," + resulty).attr({"stroke-width": "1", "stroke": "#00FF00", fill:"#00FF00"});
-	
+	last.ptCoords = {
+		x: ptx,
+		y:pty
+	}
+	last.tInicial = this.tcurrent;
+		
 	//O ponto
-	var wheelx = this.wheelDiv.offset().left * this.prop;
-	var wheely = 0;//this.wheelDiv.offset().top;
+	//var wheelx = this.wheelDiv.offset().left * this.prop;
+	//var wheely = 0;//this.wheelDiv.offset().top;
 
 	var cor = getRandomColor();
 	last.pt = this.raphael.circle(ptx, pty, this.ptR).attr("fill", cor);
-	last.graphPath = "M" + (ptx + wheelx) + "," + (pty + wheely);
-	last.graph = this.graph.path("").attr({"stroke-width": "2", "stroke": cor});
+	//this.wheelImage.push(last.pt);
+	last.graphPath = "M" + (ptx) + "," + (pty);
+	last.graph = this.raphael.path("").attr({"stroke-width": "2", "stroke": cor});
 	last.lastRot = 0;
+	last.count = 0;
 
-	//if(!$("#vetTrans")[0].checked) last.trans.hide();
-	//if(!$("#vetRot")[0].checked) last.rot.hide();
-	//if(!$("#vetResult")[0].checked) last.result.hide();
-	
 	this.pts.push(last);
 }
 
@@ -376,118 +265,58 @@ AI0188.prototype.removePt = function(pt){
 	pt.graph.remove();
 }
 
+AI0188.prototype.count = 0;
 AI0188.prototype.updateT = function(timestamp){
-	
+
 	var dt = (timestamp - this.tTotal)/1000;
 	this.tTotal = timestamp;
 
 	if(!this.pause){
 		this.tcurrent += dt;
 		//console.log(this.tcurrent)
-		this.wheelImage.attr("transform", "r-" + this.theta * this.tcurrent*100);
-		this.wheelLeft -= this.theta * dt * 270 / this.prop;
-
-		if(this.wheelLeft < -$("#wheelDiv").width()){
-			this.wheelLeft = $(window).width();
+		var newPos = (-10 - (this.wheel.ray * this.toPixel)) + this.wheel.linearVel * this.tcurrent * this.toPixel;
+		var dsx = newPos - this.wheel.center.x;
+		
+		if(newPos > this.svgWidth + (this.wheel.ray * this.toPixel) + 10){
+			newPos = -10 - (this.wheel.ray * this.toPixel);
+			this.tcurrent = 0;
+			dsx = 0;
 			for (var i = 0; i < this.pts.length; i++) {
 				pt = this.pts[i];
-				pt.graphPath = "M" + ($(window).width() * this.prop + 100) + ",270";
+				pt.graphPath = "M" + (-10 - (this.wheel.ray * this.toPixel)) + "," + (this.svgHeight/2 - this.wheel.ray * this.toPixel);
 			}
-
 		}
 
-		this.wheelDiv.css({
-			left: this.wheelLeft + "px"
-		})
-
-
-		/*if(this.count < 1){
-			this.count++;
-			requestAnimationFrame(this.updateT.bind(this));
-			return;
-		}else{
-			this.count = 0;
-		}*/
+		this.wheel.center.x = newPos;
+		this.wheelImage.attr("x", this.wheel.center.x - (this.wheel.ray * this.toPixel));
+		//this.wheelImage.translate(dsx);
+		var rotAngle = (this.wheel.theta * this.tcurrent);
+		this.wheelImage.attr("transform", "r" + rotAngle * this.toRad);// + " " + this.wheel.center.x + "," + this.wheel.center.y);
 		
 		var pt = null;
 		var ptRotation = null;
-		var bbox = null;
 		var ptx = null;
 		var pty = null;
-		var wheelx = this.wheelDiv.offset().left * this.prop;
-		var wheely = 0;//this.wheelDiv.offset().top;
-
-		/*var inicial;
-		var path = "";
-		*/
-		/*var rotx = null;
-		var roty = null;
-		var resultx = null;
-		var resulty = null;
-		var angleResult = null;*/
-		//var actualRot;
 
 		for (var i = 0; i < this.pts.length; i++) {
 			pt = this.pts[i];
-			ptRotation = this.theta * ((this.tcurrent * 1000) - pt.tInicial)/10;
-			pt.pt.attr("transform", "r-" + ptRotation + " " + this.svgSize/2 + "," + this.svgSize/2);
-			//actualRot = ptRotation - pt.lastRot;
-			//pt.lastRot = ptRotation;
+			ptRotation = (this.wheel.theta * (this.tcurrent - pt.tInicial));
+			ptx = this.wheel.center.x + pt.ray * Math.cos(pt.angle + ptRotation);
+			pty = this.wheel.center.y + pt.ray * Math.sin(pt.angle + ptRotation);
+			pt.pt.attr("cx", ptx);
+			pt.pt.attr("cy", pty);
 
-			bbox = pt.pt.getBBox();
-			ptx = (bbox.x + this.ptR) + wheelx;
-			pty = bbox.y + this.ptR + wheely;
-			pt.graphPath += "L" + ptx + "," + pty;
+			pt.count++;
 
-			pt.graph.attr("path", pt.graphPath);
-
-			/*path = "M" + ptx + "," + pty;
-
-			for (var j = pt.graphPts.length - 1; j >= 0; j--) {
-				//console.log((actualRot * dt) * pt.ray)
-				pt.graphPts[j].x += (actualRot * dt) * (pt.ray/150) * pt.ray;
-				if(pt.graphPts[j].x > 1000){
-					pt.graphPts.splice(j, 1);
-				}else{
-					path += "L" + pt.graphPts[j].x + "," + pt.graphPts[j].y;
-				}
-			};
-
-			pt.graphPts.push({x:ptx, y:pty});
-
-			pt.graph.attr("path", path);*/
-			/*pt.angle = Math.atan2(pty - this.svgSize/2, ptx - this.svgSize/2);
-
-			//Vetor translação:
-			pt.trans.attr("path", "M" + ptx + "," + pty + "L" + (ptx - this.vTrans) + "," + (pty) + drawArrow(bbox.x - this.vTrans + this.ptR, bbox.y + this.ptR, Math.PI));
-
-			//Vetor rotação:
-			rotx = pt.ray * Math.cos(pt.angle) + pt.d * Math.sin(pt.angle) + this.svgSize/2;
-			roty = pt.ray * Math.sin(pt.angle) - pt.d * Math.cos(pt.angle) + this.svgSize/2;
-			if(distance(rotx, roty, ptx, pty) > 5) pt.rot.attr("path", "M" + ptx + "," + pty + "L" + rotx + "," + roty + drawArrow(rotx, roty, pt.angle - Math.PI/2));
-			else pt.rot.attr("path", "M" + ptx + "," + pty + "Z");
-
-			//Vetor resultante
-			resultx = (ptx - this.vTrans - ptx) + (rotx - ptx) + ptx;
-			resulty = (pty - pty) + (roty - pty) + pty;
-			angleResult = Math.atan2((pty - pty) + (roty - pty), (ptx - this.vTrans - ptx) + (rotx - ptx));
-			if(distance(resultx, resulty, ptx, pty) >= 10) pt.result.attr("path", "M" + ptx + "," + pty + "L" + resultx + "," + resulty + drawArrow(resultx, resulty, angleResult));
-			else pt.result.attr("path", "M" + ptx + "," + pty + "L" + resultx + "," + resulty);*/
+			if(pt.count > 5){
+				pt.graphPath += "L" + ptx + "," + pty;
+				pt.graph.attr("path", pt.graphPath);
+				pt.count = 0;
+			}
+			
 		};
 	}
 
 	requestAnimationFrame(this.updateT.bind(this));
 }
 
-function drawArrow(ptx, pty, angle){
-	var r = 15;
-	/*var angle1 = 160 * Math.PI/180 + angle;
-	var angle2 = -160 * Math.PI/180 + angle;
-	var pt1x = r * Math.cos(angle1) + ptx;
-	var pt1y = r * Math.sin(angle1) + pty;
-	var pt2x = r * Math.cos(angle2) + ptx;
-	var pt2y = r * Math.sin(angle2) + pty;*/
-	//return "Z";
-	//return "L" + pt1x + "," + pt1y + "L" + pt2x + "," + pt2y + "L" + ptx + "," + pty + "Z";
-	return "L" + (r * Math.cos(160 * Math.PI/180 + angle) + ptx) + "," + (r * Math.sin(160 * Math.PI/180 + angle) + pty) + "L" + (r * Math.cos(-160 * Math.PI/180 + angle) + ptx) + "," + (r * Math.sin(-160 * Math.PI/180 + angle) + pty) + "L" + ptx + "," + pty + "Z";
-}
