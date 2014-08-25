@@ -36,7 +36,7 @@ function AI0188(element, background){
 
 AI0188.prototype.init = function(element){
 	this.createButtons();
-	this.createBackground(this.bkg);
+	//this.createBackground(this.bkg);
 	this.createWheelDiv();
 	this.createRaphael();
 }
@@ -385,7 +385,7 @@ AI0188.prototype.updateT = function(timestamp){
 		this.tcurrent += dt;
 		//console.log(this.tcurrent)
 		this.wheelImage.attr("transform", "r-" + this.theta * this.tcurrent*100);
-		this.wheelLeft -= this.theta * dt * 150 / this.prop;
+		this.wheelLeft -= this.theta * dt * 270 / this.prop;
 
 		if(this.wheelLeft < -$("#wheelDiv").width()){
 			this.wheelLeft = $(window).width();
