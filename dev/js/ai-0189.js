@@ -4,6 +4,7 @@
 
         };
 }());*/
+
 function distance(x1, y1, x2, y2){
 	return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
@@ -70,6 +71,23 @@ AI0188.prototype.createButtons = function(){
 		cursor: "pointer"
 	}).on("click", this.playPause.bind(this)
 	).appendTo('#'+this.el);
+
+	$('<div/>', {
+	    id: 'playPause',
+	    text: 'Remover pontos'
+	}).css({
+		position: "absolute",
+		width: "170px",
+		height: "40px",
+		top: "10px",
+		right: "120px",
+		"background-color": "blue",
+		"font-weight": "bold",
+		"line-height": "40px",
+		"text-align": "center",
+		cursor: "pointer"
+	}).on("click", this.removeAllPoints.bind(this)
+	).appendTo('#'+this.el);
 }
 
 AI0188.prototype.playPause = function(){
@@ -135,6 +153,13 @@ AI0188.prototype.repositionWheel = function(){
 	this.raphael.setViewBox(0,0,this.svgWidth,this.svgHeight);
     this.raphael.setSize(wWidth + 'px', whSize + 'px');
 
+    var corners = {
+    	x0: 0,
+    	y0: 300,
+    	width: this.svgWidth,
+    	height: this.svgHeight
+    }
+    this.ground.attr("path", "M" + corners.x0 + "," + corners.y0 + "L" + corners.width + "," + corners.y0 + "L" + corners.width + "," + corners.height + "L" + corners.x0 + "," + corners.height + "L" + corners.x0 + "," + corners.y0);
 }
 
 AI0188.prototype.createRaphael = function(){
@@ -152,6 +177,14 @@ AI0188.prototype.createRaphael = function(){
 	this.raphael = Raphael("wheelDiv");
 	this.raphael.setViewBox(0,0,this.svgWidth,this.svgSize);
     this.raphael.setSize('100%', '100%');
+
+    var corners = {
+    	x0: 0,
+    	y0: 300,
+    	width: this.svgWidth,
+    	height: this.svgHeight
+    }
+    this.ground = this.raphael.path("M" + corners.x0 + "," + corners.y0 + "L" + corners.width + "," + corners.y0 + "L" + corners.width + "," + corners.height + "L" + corners.x0 + "," + corners.height + "L" + corners.x0 + "," + corners.y0).attr({"stroke-width": "0", "stroke": "#575A5C", "fill": "90-#FFF-#575A5C:90-#575A5C"});
 
     this.wheel.center = {
     	x: -10 - (this.wheel.ray * this.toPixel),
@@ -181,11 +214,11 @@ AI0188.prototype.wheelClick = function(evt){
 	var posx = Number(((evt.clientX - div.offset().left) * ai.svgWidth/div.width()).toFixed(0));
 	var posy = Number(((evt.clientY - div.offset().top) * ai.svgHeight/div.height()).toFixed(0));
 	var ray = distance(this.wheel.center.x, this.wheel.center.y, posx, posy);
-	var minDist = 15;
+	var minDist = 20;
 
 	var wheelRay = this.wheel.ray * this.toPixel;
 
-	if(ray <= wheelRay) {
+	if(ray <= wheelRay + 10) {
 		if(distance(posx, posy, this.wheel.center.x, this.wheel.center.y) < minDist){
 			//Posiciona o ponto no centro da roda:
 			ai.addPoint(this.wheel.center.x,this.wheel.center.y, 0);
@@ -207,12 +240,18 @@ AI0188.prototype.wheelClick = function(evt){
 			ai.addPoint(this.wheel.center.x, this.wheel.center.y + wheelRay, wheelRay);
 		}else{
 			//Posiciona o ponto onde foi clicado.
+			if(ray > wheelRay){
+				ray = wheelRay;
+				var angle = Math.atan2(posy - this.wheel.center.y, posx - this.wheel.center.x);
+				posx = this.wheel.center.x + ray * Math.cos(angle);
+				posy = this.wheel.center.y + ray * Math.sin(angle);
+			}
 			ai.addPoint(posx, posy, ray);
 		}
 	}else{
 		//Clique fora do raio
 		//console.log(evt.target.id)
-		if(evt.target.id == "backRollingImg" || evt.target.id == "content") ai.removeAllPoints();
+		//if(evt.target.id == "backRollingImg" || evt.target.id == "content") ai.removeAllPoints();
 	}
 }
 
@@ -248,13 +287,20 @@ AI0188.prototype.addPoint = function(ptx, pty, ray){
 	this.pts.push(last);
 }
 
+var colors = ["red", "green", "blue", "orange", "grey"];
+var colorIndex = 0;
 function getRandomColor() {
-    var letters = '0123456789ABCDEF'.split('');
+    /*var letters = '0123456789ABCDEF'.split('');
     var color = '#';
     for (var i = 0; i < 6; i++ ) {
         color += letters[Math.floor(Math.random() * 16)];
     }
-    return color;
+    return color;*/
+    var cor = colors[colorIndex];
+    colorIndex++;
+    if(colorIndex >= colors.length) colorIndex = 0;
+
+    return cor;
 }
 
 AI0188.prototype.removePt = function(pt){
@@ -308,7 +354,7 @@ AI0188.prototype.updateT = function(timestamp){
 
 			pt.count++;
 
-			if(pt.count > 5){
+			if(pt.count > 3){
 				pt.graphPath += "L" + ptx + "," + pty;
 				pt.graph.attr("path", pt.graphPath);
 				pt.count = 0;
