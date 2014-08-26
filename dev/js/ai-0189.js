@@ -184,7 +184,7 @@ AI0188.prototype.createRaphael = function(){
     	width: this.svgWidth,
     	height: this.svgHeight
     }
-    this.ground = this.raphael.path("M" + corners.x0 + "," + corners.y0 + "L" + corners.width + "," + corners.y0 + "L" + corners.width + "," + corners.height + "L" + corners.x0 + "," + corners.height + "L" + corners.x0 + "," + corners.y0).attr({"stroke-width": "0", "stroke": "#575A5C", "fill": "90-#FFF-#575A5C:90-#575A5C"});
+    this.ground = this.raphael.path("M" + corners.x0 + "," + corners.y0 + "L" + corners.width + "," + corners.y0 + "L" + corners.width + "," + corners.height + "L" + corners.x0 + "," + corners.height + "L" + corners.x0 + "," + corners.y0).attr({"stroke-width": "0", "stroke": "#575A5C", "fill": "90-#FFF-#188212:85-#188212"});
 
     this.wheel.center = {
     	x: -10 - (this.wheel.ray * this.toPixel),
